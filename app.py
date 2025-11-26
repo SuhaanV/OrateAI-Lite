@@ -50,8 +50,6 @@ check_authentication()
 
 st.set_page_config(page_title="Orate AI", page_icon="🎤", layout="wide")
 
-
-
 if 'transcript_text' not in st.session_state:
     st.session_state.transcript_text = ""
 if 'sentiment_results' not in st.session_state:
@@ -273,7 +271,6 @@ mp_drawing = mp.solutions.drawing_utils
 classifier = load_posture_classifier()
 
 st.title("Orate AI")
-st.caption("Speech analysis and posture detection")
 
 with st.sidebar:
     if os.path.exists("logo.png"):
@@ -296,8 +293,37 @@ with st.sidebar:
         st.info("Practice deep breathing before you speak to calm nerves.")
 
     st.markdown("---")
-    st.subheader("Posture Detection")
-    st.info("Take a photo to analyze your posture. Ensure your full body is visible.")
+
+    if st.button("Logout", use_container_width=True):
+        st.session_state.authenticated = False
+        st.rerun()
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Audio & Analysis Controls")
+    audio_bytes = audio_recorder(
+        text="Click to record",
+        recording_color="#e74c3c",
+        neutral_color="#3498db",
+        icon_size="2x",
+    )
+
+    if audio_bytes:
+        st.audio(audio_bytes, format="audio/wav")
+        
+        if st.button("Analyze Speech", type="primary", use_container_width=True):
+            try:
+                pdf_path = process_audio(audio_bytes, audience, language_style, feedback_length)
+                st.success("Analysis complete! Results loaded below.")
+                if not pdf_path:
+                    st.warning("PDF generation failed, but your results are displayed below.")
+            except Exception as e:
+                st.error(f"Analysis error: {str(e)}")
+                st.info("Your results may still be visible below if transcription completed.")
+
+with col2:
+    st.subheader("Real-time Posture Detection")
     
     posture_image = st.camera_input("Capture your posture")
     
@@ -313,45 +339,13 @@ with st.sidebar:
                     st.session_state.posture_result = posture_result
                     st.session_state.posture_image = annotated_img
         
-        if st.session_state.posture_image is not None:
-            st.image(st.session_state.posture_image, use_container_width=True)
-        else:
-            st.image(posture_image, use_container_width=True)
-        
         if st.session_state.posture_result:
             if "Good" in st.session_state.posture_result or "good" in st.session_state.posture_result:
                 st.success("**Perfect posture!**")
             elif "No Pose" in st.session_state.posture_result:
-                st.warning("No pose detected")
+                st.info("Click 'Start' above to begin posture detection.")
             else:
                 st.error("**Needs Improvement** - Keep your back and neck straight. Avoid bending or slouching.")
-
-    st.markdown("---")
-
-    if st.button("Logout", use_container_width=True):
-        st.session_state.authenticated = False
-        st.rerun()
-
-st.subheader("Audio Recording & Analysis")
-audio_bytes = audio_recorder(
-    text="Click to record",
-    recording_color="#e74c3c",
-    neutral_color="#3498db",
-    icon_size="2x",
-)
-
-if audio_bytes:
-    st.audio(audio_bytes, format="audio/wav")
-    
-    if st.button("Analyze Speech", type="primary", use_container_width=True):
-        try:
-            pdf_path = process_audio(audio_bytes, audience, language_style, feedback_length)
-            st.success("Analysis complete! Results loaded below.")
-            if not pdf_path:
-                st.warning("PDF generation failed, but your results are displayed below.")
-        except Exception as e:
-            st.error(f"Analysis error: {str(e)}")
-            st.info("Your results may still be visible below if transcription completed.")
 
 if st.session_state.transcript_text:
     st.markdown("---")
