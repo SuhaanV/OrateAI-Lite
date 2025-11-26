@@ -50,44 +50,7 @@ check_authentication()
 
 st.set_page_config(page_title="Orate AI", page_icon="🎤", layout="wide")
 
-st.markdown("""
-<style>
-    .stApp {
-        background: linear-gradient(135deg, #040403 0%, #5B7553 25%, #8EB897 50%, #C3E8BD 75%, #9DDBAD 100%);
-    }
-    .stButton>button {
-        background-color: #5B7553;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 20px;
-    }
-    .stButton>button:hover {
-        background-color: #8EB897;
-    }
-    .stMetric {
-        background-color: rgba(91, 117, 83, 0.1);
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #5B7553;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        background-color: rgba(91, 117, 83, 0.1);
-        border-radius: 8px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        color: #040403;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #5B7553;
-        color: white;
-    }
-    .stTextInput>div>div>input, .stTextArea>div>div>textarea {
-        background-color: rgba(255, 255, 255, 0.9);
-        border: 1px solid #8EB897;
-    }
-</style>
-""", unsafe_allow_html=True)
+
 
 if 'transcript_text' not in st.session_state:
     st.session_state.transcript_text = ""
@@ -339,8 +302,8 @@ with st.sidebar:
 st.subheader("Audio Recording & Analysis")
 audio_bytes = audio_recorder(
     text="Click to record",
-    recording_color="#5B7553",
-    neutral_color="#8EB897",
+    recording_color="#e74c3c",
+    neutral_color="#3498db",
     icon_size="2x",
 )
 
@@ -365,11 +328,8 @@ st.info("Upload a photo to analyze your posture. For best results, ensure your f
 posture_image = st.camera_input("Take a photo or upload an image")
 
 if posture_image is not None:
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("**Original Image:**")
-        st.image(posture_image, use_container_width=True)
+    if 'current_posture_image' not in st.session_state:
+        st.session_state.current_posture_image = posture_image
     
     if st.button("Analyze Posture", type="primary", use_container_width=True):
         with st.spinner("Analyzing posture..."):
@@ -383,17 +343,17 @@ if posture_image is not None:
                 st.success("Posture analysis complete!")
     
     if st.session_state.posture_image is not None:
-        with col2:
-            st.markdown("**Analysis Result:**")
-            st.image(st.session_state.posture_image, use_container_width=True)
-        
-        if st.session_state.posture_result:
-            if "Good" in st.session_state.posture_result or "good" in st.session_state.posture_result:
-                st.success(f"Posture Status: **{st.session_state.posture_result}**")
-            elif "No Pose" in st.session_state.posture_result:
-                st.warning(f"{st.session_state.posture_result}")
-            else:
-                st.error(f"Posture Status: **{st.session_state.posture_result}**")
+        st.image(st.session_state.posture_image, use_container_width=True)
+    else:
+        st.image(posture_image, use_container_width=True)
+    
+    if st.session_state.posture_result:
+        if "Good" in st.session_state.posture_result or "good" in st.session_state.posture_result:
+            st.success("Posture Status: **Perfect** - Your posture is excellent!")
+        elif "No Pose" in st.session_state.posture_result:
+            st.warning(f"{st.session_state.posture_result}")
+        else:
+            st.error("Posture Status: **Needs Improvement** - Maintain proper alignment by keeping your back and neck straight. Avoid bending or slouching.")
 
 if st.session_state.transcript_text:
     st.markdown("---")
