@@ -295,6 +295,39 @@ with st.sidebar:
     else:
         st.info("Practice deep breathing before you speak to calm nerves.")
 
+    st.markdown("---")
+    st.subheader("Posture Detection")
+    st.info("Take a photo to analyze your posture. Ensure your full body is visible.")
+    
+    posture_image = st.camera_input("Capture your posture")
+    
+    if posture_image is not None:
+        if 'last_posture_image' not in st.session_state or st.session_state.last_posture_image != posture_image:
+            st.session_state.last_posture_image = posture_image
+            with st.spinner("Analyzing posture..."):
+                annotated_img, posture_result = analyze_posture_from_image(
+                    posture_image, pose, mp_pose, mp_drawing, classifier
+                )
+                
+                if annotated_img is not None:
+                    st.session_state.posture_result = posture_result
+                    st.session_state.posture_image = annotated_img
+        
+        if st.session_state.posture_image is not None:
+            st.image(st.session_state.posture_image, use_container_width=True)
+        else:
+            st.image(posture_image, use_container_width=True)
+        
+        if st.session_state.posture_result:
+            if "Good" in st.session_state.posture_result or "good" in st.session_state.posture_result:
+                st.success("**Perfect posture!**")
+            elif "No Pose" in st.session_state.posture_result:
+                st.warning("No pose detected")
+            else:
+                st.error("**Needs Improvement** - Keep your back and neck straight. Avoid bending or slouching.")
+
+    st.markdown("---")
+
     if st.button("Logout", use_container_width=True):
         st.session_state.authenticated = False
         st.rerun()
@@ -319,41 +352,6 @@ if audio_bytes:
         except Exception as e:
             st.error(f"Analysis error: {str(e)}")
             st.info("Your results may still be visible below if transcription completed.")
-
-st.markdown("---")
-
-st.subheader("Posture Detection")
-st.info("Upload a photo to analyze your posture. For best results, ensure your full body is visible in the frame.")
-
-posture_image = st.camera_input("Take a photo or upload an image")
-
-if posture_image is not None:
-    if 'current_posture_image' not in st.session_state:
-        st.session_state.current_posture_image = posture_image
-    
-    if st.button("Analyze Posture", type="primary", use_container_width=True):
-        with st.spinner("Analyzing posture..."):
-            annotated_img, posture_result = analyze_posture_from_image(
-                posture_image, pose, mp_pose, mp_drawing, classifier
-            )
-            
-            if annotated_img is not None:
-                st.session_state.posture_result = posture_result
-                st.session_state.posture_image = annotated_img
-                st.success("Posture analysis complete!")
-    
-    if st.session_state.posture_image is not None:
-        st.image(st.session_state.posture_image, use_container_width=True)
-    else:
-        st.image(posture_image, use_container_width=True)
-    
-    if st.session_state.posture_result:
-        if "Good" in st.session_state.posture_result or "good" in st.session_state.posture_result:
-            st.success("Posture Status: **Perfect** - Your posture is excellent!")
-        elif "No Pose" in st.session_state.posture_result:
-            st.warning(f"{st.session_state.posture_result}")
-        else:
-            st.error("Posture Status: **Needs Improvement** - Maintain proper alignment by keeping your back and neck straight. Avoid bending or slouching.")
 
 if st.session_state.transcript_text:
     st.markdown("---")
